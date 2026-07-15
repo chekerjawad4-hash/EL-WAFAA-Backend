@@ -12,7 +12,7 @@ const loginLimiter = rateLimit({
     skipSuccessfulRequests: true,
     message:{
         success:false,
-        error:"Too many login attempts. Try again later."
+        error:"RATE_LIMIT_TEST_2026"
     }
 });
 
