@@ -17,6 +17,7 @@ const candleRoutes = require("./routes/candleRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const tradeRoutes = require("./routes/tradeRoutes");
 const app = express();
+app.set("trust proxy", 1);
 
 app.use(cors());
 app.use(express.json());
