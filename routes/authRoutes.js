@@ -26,17 +26,11 @@ router.post("/register", (req, res) => {
     const { username, email, password } = req.body;
 
     const result = createUser(
-    console.log("REGISTER RESULT:", result);
         username,
-    console.log("REGISTER RESULT:", result);
         email,
-    console.log("REGISTER RESULT:", result);
         password
-    console.log("REGISTER RESULT:", result);
     );
-
     res.json(result);
-
 });
 
 router.post("/login", loginLimiter, (req, res) => {

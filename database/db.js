@@ -23,6 +23,7 @@ async function connectDB() {
             username TEXT UNIQUE,
             email TEXT UNIQUE,
             password TEXT,
+            uid TEXT UNIQUE,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
 

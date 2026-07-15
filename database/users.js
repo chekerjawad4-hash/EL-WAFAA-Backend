@@ -3,47 +3,68 @@ const { getDB, saveDB } = require("./db");
 const { createToken } = require("../utils/jwt");
 
 
-function createUser(username, email, password){
+function createUser(username,email,password){
 
     const db = getDB();
 
-    const hash = bcrypt.hashSync(password, 10);
+    try{
 
-    const uid = String(
-        Math.floor(1000000000 + Math.random() * 9000000000)
-    );
+        const hash = bcrypt.hashSync(password,10);
 
-    try {
-
-        const result = db.exec(
-            `INSERT INTO users 
-            (username,email,password,uid)
-            VALUES (?,?,?,?)`,
-            [username,email,hash,uid]
+        const uid = String(
+            Math.floor(1000000000 + Math.random()*9000000000)
         );
-
-        const userId = db.exec(
-            "SELECT last_insert_rowid() AS id"
-        )[0].values[0][0];
 
 
         db.run(
-            `INSERT INTO wallets
-            (user_id, usdt, dzc)
-            VALUES (?,?,?)`,
-            [userId,0,0]
+            `
+            INSERT INTO users
+            (username,email,password,uid)
+            VALUES (?,?,?,?)
+            `,
+            [
+                username,
+                email,
+                hash,
+                uid
+            ]
+        );
+
+
+        const result = db.exec(
+            "SELECT id FROM users WHERE email=?",
+            [email]
+        );
+
+
+        const userId = result[0].values[0][0];
+
+
+        db.run(
+            `
+            INSERT INTO wallets
+            (user_id,usdt,dzc)
+            VALUES (?,?,?)
+            `,
+            [
+                userId,
+                0,
+                0
+            ]
         );
 
 
         saveDB();
 
+
         return {
             success:true,
-            userId:userId
+            userId:userId,
+            uid:uid
         };
 
 
-    } catch(error){
+    }catch(error){
 
         return {
             success:false,
@@ -51,64 +72,89 @@ function createUser(username, email, password){
         };
 
     }
+
 }
 
 
 
 function loginUser(email,password){
 
-    const db = getDB();
-
-    const result = db.exec(
-        "SELECT * FROM users WHERE email=?",
-        [email]
-    );
+    const db=getDB();
 
 
-    if(!result.length){
-        return {
-            success:false,
-            error:"User not found"
-        };
-    }
+    try{
+
+        const result=db.exec(
+            "SELECT * FROM users WHERE email=?",
+            [email]
+        );
 
 
-    const user = result[0].values[0];
+        if(!result.length){
+
+            return {
+                success:false,
+                error:"User not found"
+            };
+
+        }
 
 
-    const valid = bcrypt.compareSync(
-        password,
-        user[3]
-    );
+        const user=result[0].values[0];
 
 
-    if(!valid){
-        return {
-            success:false,
-            error:"Wrong password"
-        };
-    }
+        const valid=bcrypt.compareSync(
+            password,
+            user[3]
+        );
 
 
-    const token = createToken({
-        id:user[0],
-        username:user[1],
-        email:user[2],
-        uid:user[5]
-    });
+        if(!valid){
 
-    return {
-        success:true,
-        token,
-        user:{
+            return {
+                success:false,
+                error:"Wrong password"
+            };
+
+        }
+
+
+        const token=createToken({
+
             id:user[0],
             username:user[1],
             email:user[2],
             uid:user[5]
-        }
-    };
+
+        });
+
+
+        return {
+
+            success:true,
+            token,
+
+            user:{
+                id:user[0],
+                username:user[1],
+                email:user[2],
+                uid:user[5]
+            }
+
+        };
+
+
+    }catch(error){
+
+        return {
+            success:false,
+            error:error.message
+        };
+
+    }
 
 }
+
 
 
 module.exports={
