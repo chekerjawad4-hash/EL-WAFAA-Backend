@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const auth = require("../middleware/auth");
+const adminAuth = require("../middleware/adminAuth");
 
 const { getDB } = require("../database/db");
 
@@ -32,7 +32,7 @@ router.get("/admin/dashboard",(req,res)=>{
 });
 
 
-router.get("/admin/users", auth, (req,res)=>{
+router.get("/admin/users", adminAuth, (req,res)=>{
 
     const db = getDB();
 
@@ -58,7 +58,7 @@ router.get("/admin/users", auth, (req,res)=>{
 });
 
 
-router.get("/admin/user/:id", auth, (req,res)=>{
+router.get("/admin/user/:id", adminAuth, (req,res)=>{
 
     const db = getDB();
 
@@ -100,7 +100,7 @@ router.get("/admin/user/:id", auth, (req,res)=>{
 });
 
 
-router.post("/admin/user/:id/balance", auth, (req,res)=>{
+router.post("/admin/user/:id/balance", adminAuth, (req,res)=>{
 
     const db = getDB();
 

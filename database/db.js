@@ -24,6 +24,7 @@ async function connectDB() {
             email TEXT UNIQUE,
             password TEXT,
             uid TEXT UNIQUE,
+            role TEXT DEFAULT 'user',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
 
@@ -90,6 +91,11 @@ async function connectDB() {
     try {
         db.run("ALTER TABLE users ADD COLUMN uid TEXT");
         console.log("UID column added ✅");
+    try {
+        db.run("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'");
+        console.log("Role column added ✅");
+    } catch(e) {}
+
     } catch(e) {}
 
     saveDB();
