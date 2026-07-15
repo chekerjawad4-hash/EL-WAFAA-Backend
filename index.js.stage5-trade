@@ -1,0 +1,129 @@
+const express = require("express");
+const path = require("path");
+const cors = require("cors");
+const { connectDB } = require("./database/db");
+const { createUser, loginUser } = require("./database/users");
+const { getWallet, updateWallet, depositWallet } = require("./database/wallet");
+const { createTransaction, getTransactions } = require("./database/transactions");
+const { getDZC } = require("./config/dzc");
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+app.use(express.static(path.join(__dirname, "../frontend")));
+
+app.get("/api/status", (req, res) => {
+  res.json({
+    success: true,
+    name: "EL WAFAA",
+    version: "1.0.0",
+    status: "running"
+  });
+});
+
+const PORT = 3000;
+connectDB();
+
+app.post("/api/register", (req,res)=>{
+    try {
+        const {username,email,password} = req.body;
+
+        const result = createUser(
+            username,
+            email,
+            password
+        );
+
+        res.json(result);
+
+    } catch(error) {
+        console.log(error);
+        res.status(500).json({
+            success:false,
+            error:error.message
+        });
+    }
+});
+
+
+app.post("/api/login", (req,res)=>{
+    const {email,password} = req.body;
+
+    const result = loginUser(
+        email,
+        password
+    );
+
+    res.json(result);
+});
+
+
+app.get("/api/wallet/:userId", (req,res)=>{
+
+    const result = getWallet(
+        req.params.userId
+    );
+
+    res.json(result);
+});
+
+
+app.post("/api/transaction", (req,res)=>{
+
+    const {userId,type,amount,currency} = req.body;
+
+
+    if(type === "DEPOSIT"){
+
+        const walletResult = depositWallet(
+            userId,
+            amount,
+            currency
+        );
+
+
+        if(!walletResult.success){
+            return res.json(walletResult);
+        }
+
+    }
+
+
+    const result = createTransaction(
+        userId,
+        type,
+        amount,
+        currency
+    );
+
+
+    res.json(result);
+});
+
+
+app.get("/api/transactions/:userId", (req,res)=>{
+
+    const result = getTransactions(
+        req.params.userId
+    );
+
+    res.json(result);
+});
+
+
+app.get("/api/dzc", (req,res)=>{
+
+    const result = getDZC();
+
+    res.json(result);
+
+});
+
+app.listen(PORT, () => {
+  console.log("=================================");
+  console.log(" EL WAFAA Server Started");
+  console.log(" http://127.0.0.1:" + PORT);
+  console.log("=================================");
+});
