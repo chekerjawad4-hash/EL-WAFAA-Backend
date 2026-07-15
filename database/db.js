@@ -86,6 +86,11 @@ async function connectDB() {
         );
     `);
 
+    try {
+        db.run("ALTER TABLE users ADD COLUMN uid TEXT");
+        console.log("UID column added ✅");
+    } catch(e) {}
+
     saveDB();
 
     console.log("Database connected ✅");
