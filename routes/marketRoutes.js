@@ -3,31 +3,21 @@ const router = express.Router();
 const axios = require("axios");
 
 router.get("/", async (req, res) => {
+
     try {
 
         const response = await axios.get(
-            "https://api.coingecko.com/api/v3/coins/markets",
-            {
-                params: {
-                    vs_currency: "usd",
-                    order: "market_cap_desc",
-                    per_page: 250,
-                    page: 1,
-                    sparkline: false,
-                    price_change_percentage: "24h"
-                }
-            }
+            "https://api.mexc.com/api/v3/ticker/24hr"
         );
 
-        const markets = response.data.map(c => ({
-            symbol: `${c.symbol.toUpperCase()}/USDT`,
-            name: c.name,
-            price: c.current_price,
-            change24h: c.price_change_percentage_24h ?? 0,
-            volume: c.total_volume,
-            marketCap: c.market_cap,
-            image: c.image
-        }));
+        const markets = response.data
+            .filter(c => c.symbol.endsWith("USDT"))
+            .map(c => ({
+                symbol: c.symbol,
+                price: Number(c.lastPrice),
+                change24h: Number(c.priceChangePercent),
+                volume: Number(c.volume)
+            }));
 
         res.json({
             success: true,
@@ -45,6 +35,7 @@ router.get("/", async (req, res) => {
         });
 
     }
+
 });
 
 module.exports = router;
