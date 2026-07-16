@@ -6,21 +6,37 @@ router.get("/", async (req,res)=>{
 
     try{
 
-        const response = await axios.get(
-            "https://api.binance.com/api/v3/exchangeInfo"
-        );
+        const [exchangeInfo,tickers] = await Promise.all([
+            axios.get("https://api.binance.com/api/v3/exchangeInfo"),
+            axios.get("https://api.binance.com/api/v3/ticker/24hr")
+        ]);
 
-        const markets = response.data.symbols
-            .filter(s => s.status === "TRADING")
-            .map(s => ({
-                symbol: s.symbol,
-                baseAsset: s.baseAsset,
-                quoteAsset: s.quoteAsset
-            }));
+        const tickerMap = {};
+
+        tickers.data.forEach(t=>{
+            tickerMap[t.symbol]=t;
+        });
+
+        const markets = exchangeInfo.data.symbols
+            .filter(s=>s.status==="TRADING")
+            .map(s=>{
+
+                const t=tickerMap[s.symbol]||{};
+
+                return{
+                    symbol:s.symbol,
+                    baseAsset:s.baseAsset,
+                    quoteAsset:s.quoteAsset,
+                    price:t.lastPrice||"0",
+                    change24h:t.priceChangePercent||"0",
+                    volume:t.volume||"0"
+                };
+
+            });
 
         res.json({
             success:true,
-            count: markets.length,
+            count:markets.length,
             markets
         });
 
@@ -28,7 +44,7 @@ router.get("/", async (req,res)=>{
 
         res.status(500).json({
             success:false,
-            error:"Failed to load Binance markets"
+            error:error.message
         });
 
     }
