@@ -41,6 +41,8 @@ router.get("/", async (req,res)=>{
         });
 
     }catch(error){
+        console.error("BINANCE ERROR:", error.response?.status, error.response?.data || error.message);
+
 
         res.status(500).json({
             success:false,
