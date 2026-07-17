@@ -14,7 +14,8 @@ const {
 
 router.get("/wallet", auth, (req, res) => {
 
-    const result = getWallet(req.user.id);
+    console.log("TOKEN USER ID =", req.user.id);
+const result = getWallet(req.user.id);
 
     res.json(result);
 

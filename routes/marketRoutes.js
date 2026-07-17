@@ -16,6 +16,8 @@ router.get("/", async (req, res) => {
                 symbol: c.symbol,
                 price: Number(c.lastPrice),
                 change24h: Number(c.priceChangePercent),
+                high: Number(c.highPrice),
+                low: Number(c.lowPrice),
                 volume: Number(c.volume)
             }));
 
