@@ -3,15 +3,25 @@ const fs = require("fs");
 const path = require("path");
 
 const DB_FILE = path.join(__dirname, "elwafaa.db");
+const RUNTIME_DB_FILE = process.env.VERCEL
+    ? "/tmp/elwafaa.db"
+    : DB_FILE;
 
 let db;
 
 async function connectDB() {
 
-    const SQL = await initSqlJs();
+    const SQL = await initSqlJs({
+        locateFile: (file) =>
+            path.join(__dirname, "../node_modules/sql.js/dist", file)
+    });
 
-    if (fs.existsSync(DB_FILE)) {
-        const file = fs.readFileSync(DB_FILE);
+    const sourceFile = fs.existsSync(RUNTIME_DB_FILE)
+        ? RUNTIME_DB_FILE
+        : DB_FILE;
+
+    if (fs.existsSync(sourceFile)) {
+        const file = fs.readFileSync(sourceFile);
         db = new SQL.Database(file);
     } else {
         db = new SQL.Database();
@@ -25,6 +35,7 @@ async function connectDB() {
             password TEXT,
             uid TEXT UNIQUE,
             role TEXT DEFAULT 'user',
+            referral_code TEXT UNIQUE,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
 
@@ -33,6 +44,13 @@ async function connectDB() {
             user_id INTEGER,
             usdt REAL DEFAULT 0,
             dzc REAL DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS wallet_assets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            coin TEXT,
+            balance REAL DEFAULT 0
         );
 
         CREATE TABLE IF NOT EXISTS transactions (
@@ -86,17 +104,54 @@ async function connectDB() {
             amount REAL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
+
+        CREATE TABLE IF NOT EXISTS referrals (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            referrer_id INTEGER,
+            referred_id INTEGER,
+            reward REAL DEFAULT 0,
+            status TEXT DEFAULT 'PENDING',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS platform_stats (
+            id INTEGER PRIMARY KEY,
+            users_count INTEGER DEFAULT 22682
+        );
+
+        CREATE TABLE IF NOT EXISTS daily_rewards (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER UNIQUE,
+            last_claim DATETIME
+        );
+
+        CREATE TABLE IF NOT EXISTS gifts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sender_id INTEGER NOT NULL,
+            receiver_id INTEGER NOT NULL,
+            coin TEXT NOT NULL,
+            amount REAL NOT NULL,
+            message TEXT DEFAULT '',
+            status TEXT DEFAULT 'SENT',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            message TEXT NOT NULL,
+            type TEXT DEFAULT 'INFO',
+            is_read INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
+        INSERT INTO platform_stats (id, users_count)
+        SELECT 1, 22682
+        WHERE NOT EXISTS (
+            SELECT 1 FROM platform_stats WHERE id=1
+        );
     `);
-
-    try {
-        db.run("ALTER TABLE users ADD COLUMN uid TEXT");
-        console.log("UID column added ✅");
-    try {
-        db.run("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'");
-        console.log("Role column added ✅");
-    } catch(e) {}
-
-    } catch(e) {}
 
     saveDB();
 
@@ -104,19 +159,20 @@ async function connectDB() {
 }
 
 
-function saveDB(){
+function saveDB() {
+
+    if (!db) return;
 
     const data = db.export();
 
     fs.writeFileSync(
-        DB_FILE,
+        RUNTIME_DB_FILE,
         Buffer.from(data)
     );
-
 }
 
 
-function getDB(){
+function getDB() {
     return db;
 }
 
@@ -126,5 +182,3 @@ module.exports = {
     getDB,
     saveDB
 };
-
-
